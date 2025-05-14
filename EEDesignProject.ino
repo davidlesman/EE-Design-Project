@@ -46,75 +46,43 @@ const char ssid[] = "EEERover";
 const char pass[] = "exhibition";
 const int groupNumber = 14; // Set your group number to make the IP address constant - only do this on the EEERover network
 
-const int leftMotorPin = 8;  // Left motor PWM
-const int rightMotorPin = 9; // Right motor PWM
+const int leftMotorPin = 0;  
+const int leftMotorDirPin = 1;  
+const int rightMotorPin = 11; 
+const int rightMotorDirPin = 12;
 const int motorSpeed = 128;  // PWM value (0-255)
 
-//Webpage to return when root is requested
-const char webpage[] = \
-"<html><head><style>\
-.btn {background-color: inherit;padding: 14px 28px;font-size: 16px;}\
-.btn:hover {background: #eee;}\
-</style></head>\
-<body>\
-<button class=\"btn\" onclick=\"ledOn()\">LED On</button>\
-<button class=\"btn\" onclick=\"ledOff()\">LED Off</button>\
-<button class=\"btn\" onclick=\"moveForward()\">Move Forward</button>\
-<button class=\"btn\" onclick=\"moveStop()\">Stop Moving</button>\
-<br>LED STATE: <span id=\"state\">OFF</span>\
-</body>\
-<script>\
-var xhttp = new XMLHttpRequest();\
-xhttp.onreadystatechange = function() {if (this.readyState == 4 && this.status == 200) {document.getElementById(\"state\").innerHTML = this.responseText;}};\
-function ledOn() {xhttp.open(\"GET\", \"/on\"); xhttp.send();}\
-function ledOff() {xhttp.open(\"GET\", \"/off\"); xhttp.send();}\
-function moveForward() {xhttp.open(\"GET\", \"/forward\"); xhttp.send();}\
-function moveStop() {xhttp.open(\"GET\", \"/stop\"); xhttp.send();}\
-</script></html>";
-
 WiFiWebServer server(80);
-
-//Return the web page
-void handleRoot()
-{
-  server.send(200, F("text/html"), webpage);
-}
-
-//Switch LED on and acknowledge
-void ledON()
-{
-  digitalWrite(LED_BUILTIN,1);
-  server.send(200, F("text/plain"), F("ON"));
-}
-
-//Switch LED on and acknowledge
-void ledOFF()
-{
-  digitalWrite(LED_BUILTIN,0);
-  server.send(200, F("text/plain"), F("OFF"));
-}
 
 void moveForward() {
   digitalWrite(leftMotorPin, HIGH);
   digitalWrite(rightMotorPin, HIGH);
+  digitalWrite(leftMotorDirPin, HIGH);
+  digitalWrite(rightMotorDirPin, HIGH);
   server.send(200, F("text/plain"), F("Moving Forward"));
 }
 
 void moveBack() {
-  digitalWrite(leftMotorPin, -HIGH);
-  digitalWrite(rightMotorPin, -HIGH);
+  digitalWrite(leftMotorPin, HIGH);
+  digitalWrite(rightMotorPin, HIGH);
+  digitalWrite(leftMotorDirPin, LOW);
+  digitalWrite(rightMotorDirPin, LOW);
   server.send(200, F("text/plain"), F("Moving Backwards"));
 }
 
 void moveLeft() {
-  digitalWrite(leftMotorPin, HIGH);
-  digitalWrite(rightMotorPin, LOW);
+  digitalWrite(leftMotorPin, LOW);
+  digitalWrite(rightMotorPin, HIGH);
+  digitalWrite(leftMotorDirPin, HIGH);
+  digitalWrite(rightMotorDirPin, HIGH);
   server.send(200, F("text/plain"), F("Moving Left"));
 }
 
 void moveRight() {
-  digitalWrite(leftMotorPin, LOW);
-  digitalWrite(rightMotorPin, HIGH);
+  digitalWrite(leftMotorPin, HIGH);
+  digitalWrite(rightMotorPin, LOW);
+  digitalWrite(leftMotorDirPin, HIGH);
+  digitalWrite(rightMotorDirPin, HIGH);
   server.send(200, F("text/plain"), F("Moving Right"));
 }
 
@@ -181,9 +149,6 @@ void setup()
   }
 
   //Register the callbacks to respond to HTTP requests
-  server.on(F("/"), handleRoot);
-  server.on(F("/on"), ledON);
-  server.on(F("/off"), ledOFF);
   server.on(F("/forward"), moveForward);
   server.on(F("/back"), moveBack);
   server.on(F("/left"), moveLeft);
