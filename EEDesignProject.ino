@@ -46,8 +46,8 @@ const char ssid[] = "EEERover";
 const char pass[] = "exhibition";
 const int groupNumber = 14; // Set your group number to make the IP address constant - only do this on the EEERover network
 
-const int leftMotorPin = 9;  // Left motor PWM
-const int rightMotorPin = 10; // Right motor PWM
+const int leftMotorPin = 8;  // Left motor PWM
+const int rightMotorPin = 9; // Right motor PWM
 const int motorSpeed = 128;  // PWM value (0-255)
 
 //Webpage to return when root is requested
@@ -95,14 +95,32 @@ void ledOFF()
 }
 
 void moveForward() {
-  analogWrite(leftMotorPin, motorSpeed);
-  analogWrite(rightMotorPin, motorSpeed);
+  digitalWrite(leftMotorPin, HIGH);
+  digitalWrite(rightMotorPin, HIGH);
   server.send(200, F("text/plain"), F("Moving Forward"));
 }
 
+void moveBack() {
+  digitalWrite(leftMotorPin, -HIGH);
+  digitalWrite(rightMotorPin, -HIGH);
+  server.send(200, F("text/plain"), F("Moving Backwards"));
+}
+
+void moveLeft() {
+  digitalWrite(leftMotorPin, HIGH);
+  digitalWrite(rightMotorPin, LOW);
+  server.send(200, F("text/plain"), F("Moving Left"));
+}
+
+void moveRight() {
+  digitalWrite(leftMotorPin, LOW);
+  digitalWrite(rightMotorPin, HIGH);
+  server.send(200, F("text/plain"), F("Moving Right"));
+}
+
 void moveStop() {
-  analogWrite(leftMotorPin, 0);
-  analogWrite(rightMotorPin, 0);
+  digitalWrite(leftMotorPin, LOW);
+  digitalWrite(rightMotorPin, LOW);
   server.send(200, F("text/plain"), F("Stopping"));
 }
 
@@ -126,12 +144,12 @@ void handleNotFound()
 
 void setup()
 {
+  digitalWrite(leftMotorPin, LOW);
+  digitalWrite(rightMotorPin, LOW);
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(leftMotorPin, OUTPUT);
   pinMode(rightMotorPin, OUTPUT);
   digitalWrite(LED_BUILTIN, 0);
-  analogWrite(leftMotorPin, 0);
-  analogWrite(rightMotorPin, 0);
 
   Serial.begin(9600);
 
@@ -167,6 +185,9 @@ void setup()
   server.on(F("/on"), ledON);
   server.on(F("/off"), ledOFF);
   server.on(F("/forward"), moveForward);
+  server.on(F("/back"), moveBack);
+  server.on(F("/left"), moveLeft);
+  server.on(F("/right"), moveRight);
   server.on(F("/stop"), moveStop);
 
   server.onNotFound(handleNotFound);

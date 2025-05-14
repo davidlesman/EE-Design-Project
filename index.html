@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Robot Keyboard Control</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding-top: 60px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .info {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        kbd {
+            background-color: #000;
+            color: azure;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        input {
+            font-size: 16px;
+            padding: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Robot WASD / ZQSD Controller</h1>
+    <p>Enter robot IP: <input id="ip" type="text" placeholder="normally, 192.168.0.15" /></p>
+    <p>Use <kbd>W/A/S/D</kbd> or <kbd>Z/Q/S/D</kbd> to move</p>
+    <p>Press <kbd>G</kbd> to stop</p>
+
+    <div class="info">Status: <span id="status">Idle</span></div>
+
+    <script>
+        const statusDisplay = document.getElementById("status");
+        const ipInput = document.getElementById("ip");
+
+        document.addEventListener("keydown", function (e) {
+            const ip = ipInput.value.trim();
+            if (!ip) {
+                statusDisplay.textContent = "Enter robot IP";
+                return;
+            }
+
+            const key = e.key.toLowerCase();
+            let command = "";
+            let label = "";
+
+            switch (key) {
+                case "w":
+                case "z":
+                    command = "forward"; label = "Moving Forward"; break;
+                case "s":
+                    command = "back"; label = "Moving Backward"; break;
+                case "a":
+                case "q":
+                    command = "left"; label = "Turning Left"; break;
+                case "d":
+                    command = "right"; label = "Turning Right"; break;
+                case "g":
+                    command = "stop"; label = "Stopped"; break;
+                default:
+                    return; // ignore other keys
+            }
+
+            fetch(`http://${ip}/${command}`)
+                .then(res => res.text())
+                .then(txt => {
+                    statusDisplay.textContent = label;
+                })
+                .catch(err => {
+                    statusDisplay.textContent = "Failed to connect";
+                });
+        });
+    </script>
+
+</body>
+
+</html>
