@@ -15,9 +15,23 @@
             margin-bottom: 20px;
         }
 
-        .info {
-            font-size: 18px;
-            margin-top: 20px;
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr;
+        }
+
+        aside {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            padding: 1rem;
+        }
+
+        main>div {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            padding: 1rem;
         }
 
         kbd {
@@ -35,13 +49,23 @@
 </head>
 
 <body>
-
-    <h1>Robot WASD / ZQSD Controller</h1>
+    <h1>Robot Controller</h1>
     <p>Enter robot IP: <input id="ip" type="text" placeholder="normally, 192.168.0.15" /></p>
-    <p>Use <kbd>W/A/S/D</kbd> or <kbd>Z/Q/S/D</kbd> to move</p>
-    <p>Press <kbd>G</kbd> to stop</p>
-
-    <div class="info">Status: <span id="status">Idle</span></div>
+    <main>
+        <aside>
+            <h2>Controls</h2>
+            <p>Use <kbd>W/A/S/D</kbd> or <kbd>Z/Q/S/D</kbd> to move</p>
+            <p>Press <kbd>G</kbd> to stop</p>
+            <p>Press <kbd>C</kbd> to test connection</p>
+        </aside>
+        <div class="info">
+            <h2>Info</h2>
+            <p>Status: <span id="status">Waiting for connection...</span></p>
+        </div>
+        <div class="output">
+            <h2>Duck Log</h2>
+        </div>
+    </main>
 
     <script>
         const statusDisplay = document.getElementById("status");
@@ -50,6 +74,7 @@
         document.addEventListener("keydown", function (e) {
             const ip = ipInput.value.trim();
             if (!ip) {
+                ip = "192.168.0.15";
                 statusDisplay.textContent = "Enter robot IP";
                 return;
             }
@@ -61,26 +86,29 @@
             switch (key) {
                 case "w":
                 case "z":
-                    command = "forward"; label = "Moving Forward"; break;
+                    command = "forward"; break;
                 case "s":
-                    command = "back"; label = "Moving Backward"; break;
+                    command = "back"; break;
                 case "a":
                 case "q":
-                    command = "left"; label = "Turning Left"; break;
+                    command = "left"; break;
                 case "d":
-                    command = "right"; label = "Turning Right"; break;
+                    command = "right"; break;
                 case "g":
-                    command = "stop"; label = "Stopped"; break;
+                    command = "stop"; break;
+                case "c":
+                    command = ""; break;
                 default:
                     return; // ignore other keys
             }
 
             fetch(`http://${ip}/${command}`)
                 .then(res => res.text())
-                .then(txt => {
-                    statusDisplay.textContent = label;
+                .then(text => {
+                    statusDisplay.textContent = text;
                 })
                 .catch(err => {
+                    console.error(err);
                     statusDisplay.textContent = "Failed to connect";
                 });
         });
