@@ -54,9 +54,10 @@
     <main>
         <aside>
             <h2>Controls</h2>
-            <p>Use <kbd>W/A/S/D</kbd> or <kbd>Z/Q/S/D</kbd> to move</p>
-            <p>Press <kbd>G</kbd> to stop</p>
-            <p>Press <kbd>C</kbd> to test connection</p>
+            <p>Use <kbd>w/a/s/d</kbd> or <kbd>z/q/s/d</kbd> to move</p>
+            <p>Use <kbd>i</kbd> to get IR value</p>
+            <p>Press <kbd>g</kbd> to stop</p>
+            <p>Press <kbd>c</kbd> to test connection</p>
         </aside>
         <div class="info">
             <h2>Info</h2>
@@ -96,6 +97,8 @@
                     command = "right"; break;
                 case "g":
                     command = "stop"; break;
+                case "i":
+                    command = "IR"; break;
                 case "c":
                     command = ""; break;
                 default:

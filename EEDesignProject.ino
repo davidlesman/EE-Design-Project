@@ -127,33 +127,25 @@ void handleNotFound()
 }
 
 
-// Global variables for frequency tracking
-unsigned long lastEdgeTime = 0;
-unsigned long lastPeriod = 0;
-float frequency = 0;
-bool lastState = LOW;
-bool newCycle = false;
-
 void handlePhotoSensor() {
-  bool currentState = digitalRead(photoSensorPin);
-  unsigned long now = micros();
+  // Measure HIGH pulse width
+  unsigned long highTime = pulseIn(photoSensorPin, HIGH);
 
-  if (currentState != lastState) {
-    // Detected an edge (rising or falling)
-    if (newCycle) {
-      lastPeriod = now - lastEdgeTime;
-      frequency = 1000000.0 / lastPeriod;
-      newCycle = false;
-    } else {
-      newCycle = true;
-    }
-    lastEdgeTime = now;
-    lastState = currentState;
-  }
+  // Measure LOW pulse width
+  unsigned long lowTime = pulseIn(photoSensorPin, LOW);
 
-  // Optional: Clear frequency if no new edge seen in a while
-  if (now - lastEdgeTime > 500000) { // 0.5 seconds of silence
-    frequency = 0;
+  // Total period
+  unsigned long period = highTime + lowTime;
+
+  // Convert to frequency (Hz)
+  if (period > 0) {
+    float frequency = 1000000.0 / period;
+    String sFrequency = String(frequency);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, F("text/plain"), sFrequency);
+  } else {
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, F("text/plain"), F("No signal detected."));
   }
 }
 
@@ -206,6 +198,7 @@ void setup()
   server.on(F("/left"), moveLeft);
   server.on(F("/right"), moveRight);
   server.on(F("/stop"), moveStop);
+  server.on(F("/IR"), handlePhotoSensor);
 
   server.onNotFound(handleNotFound);
 
@@ -218,7 +211,5 @@ void setup()
 // Call the server polling function in the main loop
 void loop()
 {
-  handlePhotoSensor();
-  Serial.println(frequency);
   server.handleClient();
 }
