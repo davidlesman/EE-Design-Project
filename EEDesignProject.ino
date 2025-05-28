@@ -12,9 +12,20 @@ const int leftMotorPin = 0;
 const int leftMotorDirPin = 1;
 const int rightMotorPin = 11;
 const int rightMotorDirPin = 12;
-const int motorSpeed = 128;
+
+// Motor speed constants
+const int FULL_SPEED = 255;
+const int DIAGONAL_SPEED = 50;  // Slightly slower for diagonal movement
+const int TURN_SPEED = 0;      // Slower for turning
 
 WiFiWebServer server(80);
+
+void setMotorSpeed(int leftSpeed, int rightSpeed, bool leftForward, bool rightForward) {
+    analogWrite(leftMotorPin, leftSpeed);
+    analogWrite(rightMotorPin, rightSpeed);
+    digitalWrite(leftMotorDirPin, leftForward ? HIGH : LOW);
+    digitalWrite(rightMotorDirPin, rightForward ? HIGH : LOW);
+}
 
 void root()
 {
@@ -26,10 +37,7 @@ void root()
 void moveForward()
 {
   Serial.println(F("[INFO] Command: Move Forward"));
-  digitalWrite(leftMotorPin, HIGH);
-  digitalWrite(rightMotorPin, HIGH);
-  digitalWrite(leftMotorDirPin, HIGH);
-  digitalWrite(rightMotorDirPin, HIGH);
+  setMotorSpeed(FULL_SPEED, FULL_SPEED, true, true);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, F("text/plain"), F("Moving Forward"));
 }
@@ -37,10 +45,7 @@ void moveForward()
 void moveBack()
 {
   Serial.println(F("[INFO] Command: Move Backward"));
-  digitalWrite(leftMotorPin, HIGH);
-  digitalWrite(rightMotorPin, HIGH);
-  digitalWrite(leftMotorDirPin, LOW);
-  digitalWrite(rightMotorDirPin, LOW);
+  setMotorSpeed(FULL_SPEED, FULL_SPEED, false, false);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, F("text/plain"), F("Moving Backwards"));
 }
@@ -48,10 +53,7 @@ void moveBack()
 void moveLeft()
 {
   Serial.println(F("[INFO] Command: Move Left"));
-  digitalWrite(leftMotorPin, LOW);
-  digitalWrite(rightMotorPin, HIGH);
-  digitalWrite(leftMotorDirPin, HIGH);
-  digitalWrite(rightMotorDirPin, HIGH);
+  setMotorSpeed(TURN_SPEED, FULL_SPEED, true, true);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, F("text/plain"), F("Moving Left"));
 }
@@ -59,26 +61,50 @@ void moveLeft()
 void moveRight()
 {
   Serial.println(F("[INFO] Command: Move Right"));
-  digitalWrite(leftMotorPin, HIGH);
-  digitalWrite(rightMotorPin, LOW);
-  digitalWrite(leftMotorDirPin, HIGH);
-  digitalWrite(rightMotorDirPin, HIGH);
+  setMotorSpeed(FULL_SPEED, TURN_SPEED, true, true);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, F("text/plain"), F("Moving Right"));
+}
+
+void moveForwardLeft() {
+    Serial.println(F("[INFO] Command: Move Forward-Left"));
+    setMotorSpeed(DIAGONAL_SPEED, FULL_SPEED, true, true);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, F("text/plain"), F("Moving Forward-Left"));
+}
+
+void moveForwardRight() {
+    Serial.println(F("[INFO] Command: Move Forward-Right"));
+    setMotorSpeed(FULL_SPEED, DIAGONAL_SPEED, true, true);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, F("text/plain"), F("Moving Forward-Right"));
+}
+
+void moveBackLeft() {
+    Serial.println(F("[INFO] Command: Move Back-Left"));
+    setMotorSpeed(DIAGONAL_SPEED, FULL_SPEED, false, false);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, F("text/plain"), F("Moving Back-Left"));
+}
+
+void moveBackRight() {
+    Serial.println(F("[INFO] Command: Move Back-Right"));
+    setMotorSpeed(FULL_SPEED, DIAGONAL_SPEED, false, false);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, F("text/plain"), F("Moving Back-Right"));
 }
 
 void moveStop()
 {
   Serial.println(F("[INFO] Command: Stop"));
-  digitalWrite(leftMotorPin, LOW);
-  digitalWrite(rightMotorPin, LOW);
+  setMotorSpeed(0, 0, true, true);  // Set speed to 0 but maintain direction
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, F("text/plain"), F("Stopping"));
 }
 
 void handleNotFound()
 {
-  String message = F("File Not Found\n\n");
+  String message = F("ERROR: File Not Found\n\n");
   message += F("URI: ");
   message += server.uri();
   message += F("\nMethod: ");
@@ -102,14 +128,16 @@ void handlePhotoSensor()
 {
   Serial.println(F("[INFO] Handling IR sensor request"));
 
-  unsigned long highTime = pulseIn(photoSensorPin, HIGH, 50000); // Timeout 50ms
-  unsigned long lowTime = pulseIn(photoSensorPin, LOW, 50000);   // Timeout 50ms
+  unsigned long highTime = pulseIn(photoSensorPin, HIGH,100000); // Timeout 50ms
+  unsigned long lowTime = pulseIn(photoSensorPin, LOW, 100000);   // Timeout 50ms
+  Serial.println(highTime);
+  Serial.println(lowTime);
 
   if (highTime == 0 || lowTime == 0)
   {
     Serial.println(F("[WARN] IR sensor pulse timeout or no signal"));
     server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.send(200, F("text/plain"), F("No signal detected or timeout."));
+    server.send(400, F("text/plain"), F("ERROR: No signal detected or timeout"));
     return;
   }
 
@@ -120,33 +148,46 @@ void handlePhotoSensor()
     Serial.print(F("[INFO] Frequency measured: "));
     Serial.println(frequency);
     server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.send(200, F("text/plain"), String(frequency));
+    server.send(200, F("text/plain"), String(frequency) + "Hz");
   }
   else
   {
     Serial.println(F("[ERROR] Invalid IR pulse period"));
     server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.send(200, F("text/plain"), F("Invalid pulse timing."));
+    server.send(400, F("text/plain"), F("ERROR: Invalid pulse timing"));
   }
 }
 
 void handleRadio()
 {
-  Serial.println(F("[INFO] Reading AM envelope signal"));
-  int total = 0;
-  const int samples = 100;
+  Serial.println(F("[INFO] Handling radio sensor request"));
 
-  for (int i = 0; i < samples; i++) {
-    total += analogRead(radioPin);
-    delay(2); // Sample over ~200ms total
+  unsigned long highTime = pulseIn(radioPin, HIGH, 50000); // Timeout 50ms
+  unsigned long lowTime = pulseIn(radioPin, LOW, 50000);   // Timeout 50ms
+
+  if (highTime == 0 || lowTime == 0)
+  {
+    Serial.println(F("[WARN] Radio sensor pulse timeout or no signal"));
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(400, F("text/plain"), F("ERROR: No signal detected or timeout"));
+    return;
   }
 
-  float avg = total / float(samples);
-  Serial.print(F("[INFO] Average envelope: "));
-  Serial.println(avg);
-
-  server.sendHeader("Access-Control-Allow-Origin", "*");
-  server.send(200, "text/plain", "Average envelope value: " + String(avg));
+  unsigned long period = highTime + lowTime;
+  if (period > 0)
+  {
+    float frequency = 1000000.0 / period;
+    Serial.print(F("[INFO] Frequency measured: "));
+    Serial.println(frequency);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, F("text/plain"), String(frequency) + "Hz");
+  }
+  else
+  {
+    Serial.println(F("[ERROR] Invalid radio pulse period"));
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(400, F("text/plain"), F("ERROR: Invalid pulse timing"));
+  }
 }
 
 void setup()
@@ -165,8 +206,8 @@ void setup()
   pinMode(rightMotorDirPin, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
-  digitalWrite(leftMotorPin, LOW);
-  digitalWrite(rightMotorPin, LOW);
+  // Initialize motors to stopped state
+  setMotorSpeed(0, 0, true, true);
   digitalWrite(LED_BUILTIN, LOW);
 
   if (WiFi.status() == WL_NO_SHIELD)
@@ -196,11 +237,15 @@ void setup()
   server.on(F("/back"), moveBack);
   server.on(F("/left"), moveLeft);
   server.on(F("/right"), moveRight);
+  server.on(F("/forward-left"), moveForwardLeft);
+  server.on(F("/forward-right"), moveForwardRight);
+  server.on(F("/back-left"), moveBackLeft);
+  server.on(F("/back-right"), moveBackRight);
   server.on(F("/stop"), moveStop);
   server.on(F("/IR"), handlePhotoSensor);
+  server.on(F("/radio"), handleRadio);
   server.onNotFound(handleNotFound);
 
-  server.on(F("/radio"), handleRadio);
   server.begin();
   Serial.println(F("[INFO] HTTP server started"));
 }
