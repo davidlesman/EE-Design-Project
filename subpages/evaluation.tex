@@ -1,0 +1,34 @@
+\begin{enumerate}
+    \item Ultrasound -- Optimising the gain in the circuit when receiving the ultrasonic signal, allowing for detection at a further range.
+    \item Arduino -- Should send separate messages to interface with display text and information for duck detection, instead of extracting information from the original text response.
+    \item CAD -- Designs had to be redone due to strain from weight (such as magnetic arm), something that should've been considered beforehand.
+    \item Radio -- Could have trialled the coil antenna and collected results to compare it against the inductor to see how different the two methods were.
+    \item Infrared -- With better time management, a thorough investigation would have built the bandpass filters as well and tested for efficiency...
+    \item Magnetic -- Could have benefited from a dynamic gain amplification stage...
+    \item Budgeting -- The cumulative budget came out to £50, but this could have been avoided through better op-amp research (see Table~\ref{tab:component_orders}).
+\end{enumerate}
+
+\begin{table}[H]
+    \centering
+    \small
+    \makebox[\textwidth]{%
+        \begin{tabular}{|p{5cm}|l|r|r|r|}
+            \hline
+            \textbf{Description}                   & \textbf{Unit Price (£)} & \textbf{Quantity} & \textbf{Line Sum (£)} \\
+            \hline
+            MCUSD16A40S12RO Ultrasonic transceiver & 1.76                    & 1                 & 1.76                  \\
+            1N4148 Diode                           & 0.04                    & 5                 & 0.20                  \\
+            MCP6021-I/P Opamp                      & 1.34                    & 2                 & 2.68                  \\
+            DRV5053OAQLPG Hall Effect Sensor       & 0.65                    & 1                 & 0.65                  \\
+            LM358N/NOPB Opamp                      & 0.66                    & 1                 & 0.66                  \\
+            LM6142BIN/NOPB Opamp                   & 6.94                    & 3                 & 20.82                 \\
+            OPA703PA Opamp                         & 4.73                    & 5                 & 23.65                 \\
+            LM324N Opamp                           & 0.28                    & 1                 & 0.28                  \\
+            \hline
+        \end{tabular}
+    }
+    \caption{Component Orders and Costs}
+    \label{tab:component_orders}
+\end{table}
+
+
