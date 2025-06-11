@@ -1,0 +1,34 @@
+\contentsline {chapter}{\numberline {1}Abstract}{2}{chapter.1}%
+\contentsline {chapter}{\numberline {2}Introduction and Targeted Objectives}{3}{chapter.2}%
+\contentsline {chapter}{\numberline {3}Project Management and Team Coordination}{6}{chapter.3}%
+\contentsline {chapter}{\numberline {4}Infrared Detection}{8}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Initial Ideas}{8}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Dissecting the Phototransistor}{8}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Amplification Analysis}{10}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Complexities using Band-Pass Filters}{11}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Simplification using Arduino}{16}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Building and Testing}{18}{section.4.6}%
+\contentsline {chapter}{\numberline {5}Ultrasound Detection}{20}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Initial Ideas}{20}{section.5.1}%
+\contentsline {section}{\numberline {5.2}The Ultrasound Signal}{21}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Envelope detector}{24}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Comparator}{26}{section.5.4}%
+\contentsline {chapter}{\numberline {6}Radio Detection}{29}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Initial Ideas}{29}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Circuit Design}{29}{section.6.2}%
+\contentsline {subsubsection}{Signal Modelling}{30}{figure.caption.38}%
+\contentsline {subsubsection}{Demodulation}{31}{figure.caption.39}%
+\contentsline {subsubsection}{Signal Amplification}{32}{figure.caption.40}%
+\contentsline {subsubsection}{Building and Testing}{32}{figure.caption.40}%
+\contentsline {chapter}{\numberline {7}Magnetic Detection}{34}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Initial Ideas}{34}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Hall Effect Sensor}{34}{section.7.2}%
+\contentsline {section}{\numberline {7.3}DRV5053 Hall Sensor Analysis}{35}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Amplification}{36}{section.7.4}%
+\contentsline {section}{\numberline {7.5}Building and Testing}{37}{section.7.5}%
+\contentsline {chapter}{\numberline {8}Arduino and CAD Integration}{39}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Arduino Code}{39}{section.8.1}%
+\contentsline {section}{\numberline {8.2}CAD}{44}{section.8.2}%
+\contentsline {chapter}{\numberline {9}Conclusion}{46}{chapter.9}%
+\contentsline {chapter}{\numberline {10}Project Evaluation and Future Actions}{47}{chapter.10}%
+\contentsline {chapter}{\numberline {A}References}{48}{appendix.A}%

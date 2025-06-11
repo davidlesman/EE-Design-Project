@@ -1,0 +1,354 @@
+8 – Arduino and CAD 
+
+8.1 Arduino Code 
+
+The Arduino implementation is designed to be robust and efficient, focusing on reliable data handling and motor control. The code is structured around a web server that handles HTTP requests, allowing for remote control and sensor data retrieval.
+
+The core functionality is implemented through a WiFiWebServer that handles various routes for movement control and sensor readings. The server is configured to accept requests from any origin (using CORS headers) and responds with appropriate status codes and messages. The server runs on port 80 and implements a RESTful API design pattern for all operations.
+
+Movement Control:
+The rover's movement is controlled through a set of motor control functions that manage the left and right motors independently. Each motor has two control pins:
+- A speed control pin (PWM) - pins 8 and 11 for left and right motors respectively
+- A direction control pin (digital) - pins 9 and 12 for left and right motors respectively
+
+The movement functions (moveForward, moveBack, moveLeft, moveRight, etc.) use a setMotorSpeed() helper function that takes four parameters:
+- Left motor speed (0-255)
+- Right motor speed (0-255)
+- Left motor direction (true/false)
+- Right motor direction (true/false)
+
+Different movement types use different speed constants:
+- FULL_SPEED (255) for straight movement
+- DIAGONAL_SPEED (50) for diagonal movement
+- TURN_SPEED (0) for turning maneuvers
+
+The movement system supports eight distinct movement patterns:
+1. Forward (both motors forward at full speed)
+2. Backward (both motors backward at full speed)
+3. Left turn (right motor forward, left motor at turn speed)
+4. Right turn (left motor forward, right motor at turn speed)
+5. Forward-left (diagonal movement)
+6. Forward-right (diagonal movement)
+7. Back-left (diagonal movement)
+8. Back-right (diagonal movement)
+
+Sensor Integration:
+The code implements four main sensors:
+1. Infrared (Photo) Sensor:
+   - Connected to analog pin A2
+   - Measures frequency using pulse timing
+   - Uses pulseIn() with 100ms timeout
+   - Returns frequency in Hz
+   - Handles timeout and invalid signal cases
+
+2. Radio Sensor:
+   - Connected to analog pin A1
+   - Similar frequency measurement approach
+   - Uses pulseIn() with 50ms timeout
+   - Returns frequency in Hz
+   - Implements error handling for no signal detection
+
+3. Magnetic Sensor:
+   - Connected to analog pin A0
+   - Measures voltage to determine magnetic pole
+   - Uses voltage thresholds:
+     * ≥ 2.05V for South pole
+     * ≤ 1.98V for North pole
+   - Returns "NORTH" or "SOUTH" based on voltage thresholds
+   - Includes invalid reading detection
+
+4. Ultrasonic Communication:
+   - Uses Serial1 at 600 baud
+   - Implements a protocol to receive 4-character names
+   - Starts with '#' character
+   - Implements timeout detection (1000ms)
+   - Returns the complete name
+   - Includes buffer clearing and error handling
+
+Network Configuration:
+The Arduino connects to a predefined WiFi network ("EEERover") and is assigned a static IP based on the group number (192.168.0.[groupNumber+1]). This ensures consistent network addressing for the web interface. The WiFi connection is established during setup with:
+- Automatic reconnection attempts
+- Status verification
+- LED indicator for connection status
+- Error handling for missing WiFi shield
+
+Error Handling:
+The code includes comprehensive error handling:
+- Timeout detection for sensor readings
+- Invalid signal detection
+- Network connection verification
+- 404 handling for unknown routes
+- Serial communication error handling
+- Motor control safety checks
+- Sensor reading validation
+- HTTP response status codes (200, 400, 404)
+
+Debugging and Logging:
+The implementation includes extensive debugging features:
+- Serial output at 9600 baud
+- Command logging for all operations
+- Sensor reading logging
+- Network status logging
+- Error message logging
+- Response status logging
+
+This implementation provides a solid foundation for the rover's operation, with clear separation of concerns between movement control, sensor reading, and network communication. The web server approach allows for easy integration with the user interface while maintaining reliable operation of the core systems. The code is designed to be maintainable and debuggable, with comprehensive error handling and logging throughout.
+
+This started out by first removing the sample webpage from the Arduino and only using the Arduino to read and transmit data. To now interact with the Arduino, and hence the EESeaboat (‘rover’), we had to create an easy-to-use interface which communicated user input to the rover. This was done by setting up the Arduino as a server, which responds to certain HTTP requests and executing a function based on that request which would handle that user input. 
+
+We now have a separation between user interface and the rover itself, which we can visualise in the following diagram. 
+
+Picture 498523477, PictureFigure 8.1: Data Flows Diagram 
+
+Now, all the Arduino is concerned with is data. It uses the handleClient() function from the WifiWebServer library to then handle user requests. The server handles each request separately as a route, mounted onto the server using the on() function, which takes two parameters: a URL, and the function to execute when this route is called. Take as example the routes we use for the rover movement. 
+
+server.on(F("/forward"), moveForward); 
+
+server.on(F("/back"), moveBack); 
+
+server.on(F("/left"), moveLeft); 
+
+server.on(F("/right"), moveRight); 
+
+server.on(F("/stop"), moveStop); 
+
+ 
+
+Similar routes exist to request data from the sensors. Each function then will return a status to the interface, to communicate if it's been successful or not. Take for example our code to turn the rover to the left. 
+
+void moveLeft() 
+
+{ 
+
+  Serial.println(F("[INFO] Command: Move Left")); 
+
+  digitalWrite(leftMotorPin, LOW); 
+
+  digitalWrite(rightMotorPin, HIGH); 
+
+  digitalWrite(leftMotorDirPin, HIGH); 
+
+  digitalWrite(rightMotorDirPin, HIGH); 
+
+  server.sendHeader("Access-Control-Allow-Origin", "*"); 
+
+  server.send(200, F("text/plain"), F("Moving Left")); 
+
+} 
+
+ 
+
+We first log the command for debugging. Then execute the actual content of the function, which makes the right motor turn forward, and the left motor backwards. After executing the body, the function then exits by sending an HTTP response back to the origin, with a status of 200 okay, and text which says, 'Moving Left'. All functions follow this template, similar to the subroutine protocol. Log the command, execute the body, and finish by responding to the origin. 
+
+ 
+
+The interface is a webapp. It therefore interacts with the server using the fetch() function in JavaScript. 
+
+fetch(`http://${ip}/${command}`) 
+
+                .then(res => res.text()) 
+
+                .then(text => { 
+
+                    statusDisplay.textContent = text; 
+
+   // ... more here ... 
+
+                }) 
+
+                .catch(err => { 
+
+                    console.error(err); 
+
+                    statusDisplay.textContent = "Failed to connect"; 
+
+                }); 
+
+This is the core of the interface. Based on the IP, and the command given, it sends that request to the server and then uses the response text to update the user facing content. 
+
+To run this request, we first need to define the three variables used: IP, command, and statusDisplay. The code starts by defining where to get the IP and the element used to update the current status of the rover, which is a simple span in the HTML. 
+
+const statusDisplay = document.getElementById("status"); 
+
+const ipInput = document.getElementById("ip"); 
+
+It then listens for any keyboard input, which is how the user interacts, by adding an EventListener to the page.  
+
+document.addEventListener("keydown", function (e) { 
+
+Now, we first define the IP address to use by getting the input value, and the key pressed from the event variable. 
+
+const ip = ipInput.value.trim(); 
+
+const key = e.key.toLowerCase(); 
+
+We then use a switch statement to determine what the command should be. If we want to get the radio output as an example, the code looks like the following. 
+
+switch (key) { 
+
+case "r": 
+
+    command = "radio"; break; 
+
+} 
+
+This completes all variables needed, and the GET requests follows. 
+
+Picture 2020895383, PictureFigure 7.2: Early version of user interface 
+
+ 
+
+Once all signals where implemented in code as well, we need a way to log the duck through its name and species. The name is given through the UART signal, so the only part left is to identify its species. We can use the species table from the project brief, shown below. 
+
+Species 
+	
+
+Infrared 
+	
+
+Radio 
+	
+
+Magnetic 
+
+Wibbo 
+	
+
+457Hz 
+	
+
+ 
+	
+
+Down 
+
+Gribbit 
+	
+
+ 
+	
+
+100Hz 
+	
+
+Down 
+
+Snorkle 
+	
+
+293Hz 
+	
+
+ 
+	
+
+Up 
+
+Zapple 
+	
+
+ 
+	
+
+150Hz 
+	
+
+Up 
+
+ 
+
+We can implement this logic using code, using the values stores during each signal processing to a variable. 
+
+let magnetDir = ""; 
+
+let irFreq = 0; 
+
+let radioFreq = 0; 
+
+let duckName = ""; 
+
+These get written in the sendCommand function after the data has been retrieved; one example follows 
+
+fetch(`http://${ip}/${command}`) 
+
+.then(res => res.text()) 
+
+.then(text => { 
+
+statusDisplay.textContent = text; 
+
+ 
+
+if (command === "magnet") { 
+
+if (text === "SOUTH" || text === "NORTH") { 
+
+                    magnetDir = text;                 
+
+} else if (command === "ultra") { 
+
+// other cases follow... } 
+
+Using these variables,  we can implement the table using simple if statements. 
+
+const TOLERANCE = 10;  // 10Hz tolerance for frequency measurements 
+
+            let species = "Unknown"; 
+
+             
+
+            // Check each species based on the sensor values with tolerance 
+
+            if (Math.abs(irFreq - 457) <= TOLERANCE && magnetDir === "SOUTH") { 
+
+                species = "Wibbo"; 
+
+            } else if (Math.abs(radioFreq - 100) <= TOLERANCE && magnetDir === "SOUTH") { 
+
+                // etc... 
+
+Once the species is identified, or if its unknown, the code will add the duck to the duck log on the page. 
+
+if (species !== "Unknown") { 
+
+                const logEntry = document.createElement('p'); 
+
+                logEntry.textContent = `${new Date().toLocaleTimeString()}: Identified Duck: ${species} (${duckName})`; 
+
+                duckLog.insertBefore(logEntry, duckLog.firstChild); 
+
+            } else { 
+
+                const logEntry = document.createElement('p'); 
+
+                logEntry.textContent = `${new Date().toLocaleTimeString()}: Could not identify duck species - please check all sensor values`; 
+
+                duckLog.insertBefore(logEntry, duckLog.firstChild); 
+
+            } 
+
+This then concludes a single duck processing, allowing us to swiftly move on to the next duck. 
+
+8.2 CAD 
+
+This section will contain the specifications that were kept in mind when designing parts. 
+
+To keep things simple with the design, we used the given chassis, which allowed us to spend more time working on the more pressing issues. However, we knew that space would be tight if we didn't add anything to the original chassis. We wanted to push the chassis to the extreme, so we looked at what was available to be worked with. The chassis has two holes at the front, originally meant for servo motors. We decided to repurpose these to place a mount, which would hold our ill-fitting circuitry and all the sensors. 
+
+That was the inspiration for the design process, which translated to fitting a second breadboard onto the chassis and finding a clever way to mount the sensors to this part. We came up with a design where the bread board sits in the middle of a coverless box, which has holes on the sides to allow easy screw mounting of the sensors. 
+
+ 
+
+[PIC NEEDED] 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 

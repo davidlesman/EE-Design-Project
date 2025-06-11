@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Duck Detection System</title>
+    <style>
+        :root {
+            --primary-color: #f5f5f7;
+            --secondary-color: #ffffff;
+            --accent-color: #0071e3;
+            --text-color: #1d1d1f;
+            --text-secondary: #86868b;
+            --success-color: #34c759;
+            --warning-color: #ff9500;
+            --error-color: #ff3b30;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 1rem;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            height: calc(100vh - 2rem);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: 2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .connection-panel {
+            background-color: var(--secondary-color);
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .connection-panel label {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .connection-panel input {
+            flex: 1;
+            padding: 0.875rem 1.25rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        .connection-panel input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+        }
+
+        .connection-panel button {
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 12px;
+            background-color: var(--accent-color);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        .connection-panel button:hover {
+            background-color: #0077ed;
+            transform: translateY(-1px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1rem;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .control-panel, .status-panel {
+            background-color: var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .control-panel h2, .status-panel h2 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .key-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .key-group {
+            background-color: var(--primary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .key-group h3 {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .key-group p {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        kbd {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            padding: 0.375rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            min-width: 2.5rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .logs-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .log-section {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .log-section h3 {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .log-display {
+            background-color: var(--primary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            font-size: 0.9rem;
+            min-height: 0;
+        }
+
+        .log-entry {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            animation: fadeIn 0.3s ease-out;
+            font-size: 0.9rem;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .timestamp {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+
+        .status-success {
+            color: var(--success-color);
+        }
+
+        .status-error {
+            color: var(--error-color);
+        }
+
+        .status-warning {
+            color: var(--warning-color);
+        }
+
+        .duck-entry {
+            background-color: rgba(52, 199, 89, 0.1);
+            border-left: 3px solid var(--success-color);
+            margin: 0.25rem 0;
+        }
+
+        /* Custom scrollbar */
+        .log-display::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-display::-webkit-scrollbar-track {
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        .log-display::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .log-display::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .key-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .logs-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Duck Detection System</h1>
+        
+        <div class="connection-panel">
+            <label for="ip">Robot IP</label>
+            <input id="ip" type="text" placeholder="192.168.0.15" />
+            <button id="testConnection">Test Connection</button>
+        </div>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <h2>Controls</h2>
+                <div class="key-controls">
+                    <div class="key-group">
+                        <h3>Movement</h3>
+                        <p><kbd>W</kbd> / <kbd>Z</kbd> Forward</p>
+                        <p><kbd>S</kbd> Backward</p>
+                        <p><kbd>A</kbd> / <kbd>Q</kbd> Left</p>
+                        <p><kbd>D</kbd> Right</p>
+                        <p><kbd>G</kbd> Stop</p>
+                    </div>
+                    <div class="key-group">
+                        <h3>Sensors</h3>
+                        <p><kbd>I</kbd> IR Sensor</p>
+                        <p><kbd>R</kbd> Radio Sensor</p>
+                        <p><kbd>M</kbd> Magnet Sensor</p>
+                        <p><kbd>U</kbd> Ultrasonic</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-panel">
+                <h2>Status</h2>
+                <div class="logs-container">
+                    <div class="log-section">
+                        <h3>System Log</h3>
+                        <div class="log-display" id="systemLog"></div>
+                    </div>
+                    <div class="log-section">
+                        <h3>Duck Log</h3>
+                        <div class="log-display" id="duckLog"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const systemLog = document.getElementById("systemLog");
+        const duckLog = document.getElementById("duckLog");
+        const ipInput = document.getElementById("ip");
+        const testButton = document.getElementById("testConnection");
+
+        // Duck species dictionary
+        const duckSpecies = {
+            'Wibbo': { infrared: '457Hz', radio: null, magnetic: 'Down' },
+            'Gribbit': { infrared: null, radio: '100Hz', magnetic: 'Down' },
+            'Snorkle': { infrared: '293Hz', radio: null, magnetic: 'Up' },
+            'Zapple': { infrared: null, radio: '150Hz', magnetic: 'Up' }
+        };
+
+        // Current sensor readings
+        let currentReadings = {
+            infrared: null,
+            radio: null,
+            magnetic: null,
+            ultrasonic: null
+        };
+
+        function addLogEntry(message, type = '', isDuck = false) {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type} ${isDuck ? 'duck-entry' : ''}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            
+            if (isDuck) {
+                duckLog.insertBefore(entry, duckLog.firstChild);
+            } else {
+                systemLog.insertBefore(entry, systemLog.firstChild);
+            }
+        }
+
+        function identifyDuck() {
+            for (const [species, data] of Object.entries(duckSpecies)) {
+                if (data.infrared === currentReadings.infrared &&
+                    data.radio === currentReadings.radio &&
+                    data.magnetic === currentReadings.magnetic) {
+                    return species;
+                }
+            }
+            return null;
+        }
+
+        function sendCommand(command, label) {
+            const ip = ipInput.value.trim() || "192.168.0.15";
+            
+            fetch(`http://${ip}/${command}`)
+                .then(res => res.text())
+                .then(text => {
+                    // Check for error messages in the response
+                    const isError = text.toLowerCase().includes('error') || 
+                                  text.toLowerCase().includes('invalid') ||
+                                  text.toLowerCase().includes('no signal');
+                    
+                    const isWarning = text.toLowerCase().includes('warning') ||
+                                    text.toLowerCase().includes('timeout');
+
+                    const statusType = isError ? 'status-error' : 
+                                     isWarning ? 'status-warning' : 
+                                     'status-success';
+
+                    addLogEntry(`${label}: ${text}`, statusType);
+                    
+                    // Update current readings based on sensor type
+                    if (command === "IR") currentReadings.infrared = text;
+                    else if (command === "radio") currentReadings.radio = text;
+                    else if (command === "magnet") currentReadings.magnetic = text;
+                    else if (command === "ultrasonic") currentReadings.ultrasonic = text;
+
+                    // Check if we can identify a duck
+                    const identifiedSpecies = identifyDuck();
+                    if (identifiedSpecies) {
+                        addLogEntry(`Duck identified: ${identifiedSpecies}`, 'status-success', true);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    addLogEntry("Connection failed", 'status-error');
+                });
+        }
+
+        // Test connection button handler
+        testButton.addEventListener('click', () => {
+            const ip = ipInput.value.trim() || "192.168.0.15";
+            addLogEntry("Testing connection...", 'status-warning');
+            
+            fetch(`http://${ip}/`)
+                .then(res => res.text())
+                .then(text => {
+                    addLogEntry("Connection test successful", 'status-success');
+                })
+                .catch(err => {
+                    console.error(err);
+                    addLogEntry("Connection test failed", 'status-error');
+                });
+        });
+
+        document.addEventListener("keydown", function (e) {
+            const key = e.key.toLowerCase();
+            let command = "";
+            let label = "";
+
+            switch (key) {
+                case "w":
+                case "z":
+                    command = "forward";
+                    label = "Moving forward";
+                    break;
+                case "s":
+                    command = "back";
+                    label = "Moving backward";
+                    break;
+                case "a":
+                case "q":
+                    command = "left";
+                    label = "Turning left";
+                    break;
+                case "d":
+                    command = "right";
+                    label = "Turning right";
+                    break;
+                case "g":
+                    command = "stop";
+                    label = "Stopped";
+                    break;
+                case "i":
+                    command = "IR";
+                    label = "Reading IR sensor";
+                    break;
+                case "r":
+                    command = "radio";
+                    label = "Reading radio sensor";
+                    break;
+                case "m":
+                    command = "magnet";
+                    label = "Reading magnet sensor";
+                    break;
+                case "u":
+                    command = "ultrasonic";
+                    label = "Reading ultrasonic sensor";
+                    break;
+                default:
+                    return;
+            }
+
+            sendCommand(command, label);
+        });
+    </script>
+
+</body>
+
+</html>
