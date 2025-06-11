@@ -1,0 +1,68 @@
+\documentclass[12pt,a4paper]{report}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage[top=2.5cm,bottom=2.5cm,left=3cm,right=3cm]{geometry}
+\usepackage{titlesec}
+\usepackage{lipsum}
+\usepackage{float}
+
+% Format
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{ELEC40006: EEESeaBoat}
+\lhead{Group 14 Report}
+\cfoot{\thepage}
+
+% Title page
+\title{\textbf{EEESeaBoat Project Report} \\ \large ELEC40006 -- Electronics Design Project 1}
+\author{
+\textbf{Group 14:} \\ David Lesman (CID: 02371181) \\ Thanus Palakumar (CID: 02556047) \\ Denzil Erza-Essien (CID: 02593040) \\ Lukas Mykhnenko (CID: 02579708)
+}
+\date{May/June 2025}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\chapter{Abstract}
+\input{subpages/abstract.tex}
+
+\chapter{Introduction and Targeted Objectives}
+\input{subpages/intro.tex}
+\chapter{Project Management and Team Coordination}
+\input{subpages/management.tex}
+
+% Placeholder for next chapters
+\chapter{Infrared Detection}
+\input{subpages/infrared.tex}
+
+\chapter{Ultrasound Detection}
+\input{subpages/ultrasound.tex}
+
+\chapter{Radio Detection}
+\input{subpages/radio.tex}
+
+\chapter{Magnetic Detection}
+\input{subpages/magnetism.tex}
+
+\chapter{Arduino and CAD Integration}
+\input{subpages/arduino.tex}
+
+\chapter{Conclusion}
+\input{subpages/conclusion.tex}
+
+\chapter{Project Evaluation and Future Actions}
+\input{subpages/evaluation.tex}
+
+\end{document}

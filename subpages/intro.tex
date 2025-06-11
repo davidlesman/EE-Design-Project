@@ -1,0 +1,51 @@
+The design process is streamlined into three technical components – Name Analysis, Species Analysis and Motion.
+
+One major element of this task was therefore the designing and constructing of sensors for infrared waves, radio waves and magnetic waves respectively. With these, the EEESeaBoat would be able to classify the different ducks in the aquatic environment.
+
+The ducks would also be communicating with “inaudible vocalisations” or ultrasonic signals which must be detected and decoded to identify their names. This key challenge of Name Analysis involves the understanding of resonant transducers, demodulating the amplitude-shift keying to extract the digital UART data and retrieving the names encoded as a 4-character ASCII string.
+
+Naturally, a static rover with sensors and detectors is nothing short of a sitting duck. Hence, the final section concerns itself with motion. Using the EEBug design from the Autumn and Spring terms along with the Metro M0 microcontroller and Arduino code to implement a Wi-Fi based remote control system, the team also strived to design a user-friendly interface that not only provided a means of control but also information on the ducks. This underlying addition will help the team verify their success along the way.
+
+The following information highlights the task objectives in further detail and the members responsible for executing it.
+
+\section{Target Objectives}
+
+\subsection*{Infrared Detection (Thanus)}
+
+The ducks will be emitting infrared pulses, which we will need to detect using a phototransistor. Beyond infrared detection, this task involves balancing technical requirements with practical constraints, necessitating an optimized detection strategy within the given time constraints.
+
+Four distinct duck species are characterized by specific frequencies with the Wibbo and Snorkle serving as the detection targets. This accentuated the need for a filter, to ensure the sensor would only be sensitive to the wavelength of the duck`s emission. Another stipulation is that the habitats emit light of a different frequency while the ducks emit optical power weaker than standard light sources, reinforcing how our detection must be accurate and make measurements within appropriate bounds.
+
+Due to the potential for frequency deviations and simultaneously needing to avoid unwanted frequencies, the detection system must accommodate a narrow acceptable range of results. To ensure clear signal analysis, the design will adhere to a detect-amplify-filter setup.
+
+\subsection*{Ultrasonic Detection (Denzil)}
+
+The ultrasonic detection task requires detection of a high frequency analogue signal which must be converted to a digital signal. Using this digital signal, the binary output can be used to convert this into letters, entailing the names of the ducks.
+
+This task required further research on ultrasonic signals and detection making it the largest challenge and most time-consuming sub-task of this overall section. However, the rest of this challenge used simpler concepts built upon prior to the project such as amplification, envelope detection and frequency filtering.
+
+The output of this is then fed into the RX port of the Arduino, which has a built-in function to decode the UART signal.
+
+\subsection*{Magnetism Analysis (Lukas)}
+
+The magnetic detection task presents unique challenges due to the static nature of the duck's magnetic field. Unlike dynamic fields that induce currents in coils, our solution must detect a fixed magnetic orientation without movement. This means practical implementation favours Hall effect sensors. The key challenge lies in reliably detecting weak magnetic fields at varying distances while accurately determining polarity.
+
+Our approach must balance several competing factors: sensitivity to detect the field at practical distances, precision to determine orientation accurately, and immunity to environmental interference. The solution will have to involve a combination of sensor selection, careful positioning, and signal conditioning. The high-sensitivity DRV5053 hall effect sensor offers a promising starting point, but it requires additional amplification to achieve detection at reasonable distances.
+
+Testing will be critical to validate detection range and orientation accuracy under realistic conditions. The final implementation must accommodate potential field strength variations while maintaining consistent polarity detection - a task that may require adjustable thresholds in our microcontroller code.
+
+\subsection*{Arduino and CAD (David)}
+
+Once all signals have been received, the Arduino is responsible for translating them to meaningful data. Each tool has its own function in code that decodes the signal, and meaning, which sends it through to a user interface. The Arduino is also responsible for receiving user commands from the interface and translating that to appropriate commands to read from each tool or move the motors a certain way.
+
+As this is a big project, we felt to simplify the process we would use the existing chassis, with some added mounts to place the appropriate detectors and extra space for more circuitry in the form of a shelf to place a breadboard.
+
+\subsection*{Radio Detection (Denzil + David + Thanus)}
+
+The species of ducks rely upon multiple detection mechanisms and the second of them is radio wave sensors. To detect the remaining 2 species, the detection system must receive and decode amplitude-modulated signals transmitted by the ducks. With careful selection of components, the key objective is to extract our desired information and frequencies from the duck signals by converting radio waves into usable signals.
+
+This procedure will involve an RLC filter to ensure resonance occurs at the target 89kHz frequency and the circuit is not interrupted by undesired frequencies before being followed up by the diode responsible for demodulation. Like the IR section, the final signals will be weak for detection, hence relying upon op-amps to strengthen the signal before feeding it into the Metro M0 microcontroller for digital analysis. Certain aspects mimic the IR section, however this detection system requires greater attention to filters and demodulation compared to a simple phototransistor-amplification-filter system. Another note would be positioning on the rover: both IR and radio systems will be measuring incoming waves from the ducks however radio waves have a greater wavelength hence it is more convenient to position the radio detection system behind the IR system to ensure directional equity rather than equality.
+
+\subsection*{Report (Thanus + David)}
+
+Throughout the project, logs will be made of planning, progress and challenges to overcome which will simultaneously be documented as a 10,000-word report. This document intends to clearly convey both theory and practical elements of the group project. Following a clear structure of highlighting objectives, analysing theory and plans, practical evaluation and closing judgments, the aim is to set out the research in a professional and sophisticated matter for an expert audience.
