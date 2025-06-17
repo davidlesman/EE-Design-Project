@@ -4,9 +4,9 @@
 
 const char ssid[] = "EEERover";
 const char pass[] = "exhibition";
-const int groupNumber = 98;
+const int groupNumber = 14;
 
-const int photoSensorPin = A2;
+const int photoSensorPin = A5;
 const int radioPin = A1;
 const int magnetPin = A0;
 const int leftMotorPin = 8;
@@ -147,9 +147,9 @@ void handlePhotoSensor()
   {
     Serial.println(F("[WARN] IR sensor pulse timeout or no signal"));
     server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.send(400, F("application/json"), F("{\"status\":\"error\",\"message\":\"No IR signal detected or timeout\"}"));
+    server.send(400, F("text/plain"), F("ERROR: No IR signal detected or timeout"));
     return;
-  }
+  } 
 
   unsigned long period = highTime + lowTime;
   if (period > 0)

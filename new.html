@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css" />
+    <title>EESeaBoat</title>
+</head>
+
+<body>
+    <div class="app">
+        <header>
+            <h1>Rover Controller</h1>
+            <div class="ip-input">
+                <label for="ip">IP:</label>
+                <input id="ip" name="ip" type="text" placeholder="192.168.0.15" />
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside>
+                <h2>Controls</h2>
+                <div class="controls">
+                    <p><kbd>W</kbd> or <kbd>Z</kbd> - Move Forward</p>
+                    <p><kbd>A</kbd> or <kbd>Q</kbd> - Move Left</p>
+                    <p><kbd>S</kbd> - Move Backward</p>
+                    <p><kbd>D</kbd> - Move Right</p>
+                    <p><kbd>G</kbd> - Stop</p>
+                    <p><kbd>I</kbd> - Get IR Value</p>
+                    <p><kbd>R</kbd> - Get Radio Value</p>
+                    <p><kbd>M</kbd> - Get Magnet Value</p>
+                    <p><kbd>U</kbd> - Get Ultrasonic Value</p>
+                    <p><kbd>N</kbd> - Identify Duck</p>
+                    <p><kbd>C</kbd> - Test Connection</p>
+                </div>
+            </aside>
+
+            <main>
+                <div class="log-section">
+                    <h2>Status Log</h2>
+                    <div id="status" class="log"></div>
+                </div>
+                <div class="log-section">
+                    <h2>Duck Log</h2>
+                    <div id="duckLog" class="log"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const statusDisplay = document.getElementById("status");
+        const ipInput = document.getElementById("ip");
+        const duckLog = document.getElementById("duckLog");
+        let activeKeys = new Set();
+        let lastMovementCommand = "";  // Only track last movement command
+
+        let magnetDir = "";
+        let irFreq = 0;
+        let radioFreq = 0;
+        let duckName = "";
+
+        function sendCommand(command, isMovement = false) {
+            const ip = ipInput.value.trim() || "192.168.0.15";
+            console.log("Sending command:", command, "to IP:", ip);
+
+            // Only check for duplicate commands if it's a movement command
+            if (isMovement && command === lastMovementCommand) return;
+            if (isMovement) lastMovementCommand = command;
+
+            fetch(`http://${ip}/${command}`)
+                .then(res => res.text())
+                .then(text => {
+                    console.log("Received response:", text);
+
+                    if (command === "magnet") {
+                        if (text === "SOUTH" || text === "NORTH") {
+                            magnetDir = text;
+                            addToLog(`Magnet: ${text}`);
+                        }
+                    } else if (command === "IR") {
+                        // Extract frequency from "123.45Hz" format
+                        const match = text.match(/(\d+\.?\d*)Hz/);
+                        if (match) {
+                            irFreq = parseFloat(match[1]);
+                            addToLog(`IR Frequency: ${irFreq.toFixed(2)}Hz`);
+                        }
+                    } else if (command === "radio") {
+                        // Extract frequency from "123.45Hz" format
+                        const match = text.match(/(\d+\.?\d*)Hz/);
+                        if (match) {
+                            radioFreq = parseFloat(match[1]);
+                            addToLog(`Radio Frequency: ${radioFreq.toFixed(2)}Hz`);
+                        }
+                    } else if (command === "ultra") {
+                        // Extract name from "Name: XXXX" format and remove # if present
+                        const match = text.match(/Name: (.+)/);
+                        if (match) {
+                            duckName = match[1].replace('#', '');
+                            addToLog(`Duck Name: ${duckName}`);
+                        }
+                    } else if (command !== "") {  // Only log non-empty commands that aren't sensor readings
+                        addToLog(text);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                    addToLog("Failed to connect");
+                });
+        }
+
+        function addToLog(message) {
+            const logEntry = document.createElement('p');
+            logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            statusDisplay.insertBefore(logEntry, statusDisplay.firstChild);
+        }
+
+        function newDuck() {
+            // uses the table from the brief to identify a duck according 
+            // to its species and adds that + name to the duck log div
+            // Species 	Infrared 	Radio 	Magnetic
+            // Wibbo 	457Hz               Down
+            // Gribbit              100Hz 	Down
+            // Snorkle 	293Hz 		        Up
+            // Zapple 		        150Hz 	Up
+
+            const TOLERANCE = 10;  // 10Hz tolerance for frequency measurements
+            let species = "Unknown";
+
+            // Check each species based on the sensor values with tolerance
+            if (Math.abs(irFreq - 457) <= TOLERANCE) {
+                species = "Wibbo";
+            } else if (Math.abs(radioFreq - 100) <= TOLERANCE) {
+                species = "Gribbit";
+            } else if (Math.abs(irFreq - 293) <= TOLERANCE) {
+                species = "Snorkle";
+            } else if (Math.abs(radioFreq - 150) <= TOLERANCE) {
+                species = "Zapple";
+            }
+
+            // Add the identification to the duck log
+            if (species !== "Unknown") {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'duck-entry';
+
+                const header = document.createElement('div');
+                header.className = 'duck-header';
+                header.innerHTML = `
+                    <span class="duck-name">${duckName}</span>
+                    <span class="duck-species">${species}</span>
+                `;
+
+                const details = document.createElement('div');
+                details.className = 'duck-details';
+                details.innerHTML = `
+                    <div>IR: ${irFreq.toFixed(2)}Hz</div>
+                    <div>Radio: ${radioFreq.toFixed(2)}Hz</div>
+                    <div>Magnet: ${magnetDir}</div>
+                `;
+
+                logEntry.appendChild(header);
+                logEntry.appendChild(details);
+                duckLog.insertBefore(logEntry, duckLog.firstChild);
+            } else {
+                const logEntry = document.createElement('p');
+                logEntry.textContent = `${new Date().toLocaleTimeString()}: Could not identify duck species - please check all sensor values`;
+                duckLog.insertBefore(logEntry, duckLog.firstChild);
+            }
+        }
+
+        function handleMovement() {
+            if (activeKeys.size === 0) {
+                sendCommand("stop", true);
+                return;
+            }
+
+            // Convert Set to Array for easier handling
+            const keys = Array.from(activeKeys);
+
+            // Determine movement direction based on active keys
+            if (keys.includes("w") || keys.includes("z")) {
+                if (keys.includes("a") || keys.includes("q")) {
+                    sendCommand("forward-left", true);
+                } else if (keys.includes("d")) {
+                    sendCommand("forward-right", true);
+                } else {
+                    sendCommand("forward", true);
+                }
+            } else if (keys.includes("s")) {
+                if (keys.includes("a") || keys.includes("q")) {
+                    sendCommand("back-left", true);
+                } else if (keys.includes("d")) {
+                    sendCommand("back-right", true);
+                } else {
+                    sendCommand("back", true);
+                }
+            } else if (keys.includes("a") || keys.includes("q")) {
+                sendCommand("left", true);
+            } else if (keys.includes("d")) {
+                sendCommand("right", true);
+            }
+        }
+
+        document.addEventListener("keydown", function (e) {
+            const key = e.key.toLowerCase();
+            console.log("Key pressed:", key);  // Debug log
+
+            // Only process movement keys
+            if (["w", "a", "s", "d", "z", "q"].includes(key)) {
+                e.preventDefault(); // Prevent default behavior (like scrolling)
+                activeKeys.add(key);
+                handleMovement();
+            } else if (key === "i") {
+                console.log("Sending IR command");  // Debug log
+                sendCommand("IR");
+            } else if (key === "m") {
+                console.log("Sending magnet command");  // Debug log
+                sendCommand("magnet");
+            } else if (key === "r") {
+                console.log("Sending radio command");  // Debug log
+                sendCommand("radio");
+            } else if (key === "u") {
+                console.log("Sending ultra command");  // Debug log
+                sendCommand("ultra");
+            } else if (key === "n") {
+                console.log("Sending newDuck command");  // Debug log
+                newDuck();
+            } else if (key === "c") {
+                console.log("Sending connection test");  // Debug log
+                sendCommand("");
+            } else if (key === "g") {
+                activeKeys.clear();
+                sendCommand("stop", true);
+            }
+        });
+
+        document.addEventListener("keyup", function (e) {
+            const key = e.key.toLowerCase();
+            if (["w", "a", "s", "d", "z", "q"].includes(key)) {
+                activeKeys.delete(key);
+                handleMovement();
+            }
+        });
+    </script>
+</body>
+
+</html>
