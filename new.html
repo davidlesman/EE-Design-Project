@@ -73,6 +73,9 @@
                 .then(res => res.text())
                 .then(text => {
                     console.log("Received response:", text);
+                    if (text.startsWith("ERROR")) {
+                        addToLog(text);
+                    }
 
                     if (command === "magnet") {
                         if (text === "SOUTH" || text === "NORTH") {
